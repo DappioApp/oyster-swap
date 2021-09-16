@@ -609,7 +609,7 @@ export const usePools = () => {
           const updated = {
             data: programIds().swapLayout.decode(account.data),
             account: account,
-            pubkey: new PublicKey(id),
+            pubkey: new PublicKey(id.toString()),
           };
 
           const index =

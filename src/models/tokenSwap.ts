@@ -127,40 +127,62 @@ export const createInitSwapInstruction = (
 
   let data = Buffer.alloc(1024);
   if (isLatest) {
-    const fields = [
-      BufferLayout.u8("instruction"),
-      BufferLayout.u8("nonce"),
-      BufferLayout.nu64("tradeFeeNumerator"),
-      BufferLayout.nu64("tradeFeeDenominator"),
-      BufferLayout.nu64("ownerTradeFeeNumerator"),
-      BufferLayout.nu64("ownerTradeFeeDenominator"),
-      BufferLayout.nu64("ownerWithdrawFeeNumerator"),
-      BufferLayout.nu64("ownerWithdrawFeeDenominator"),
-      BufferLayout.nu64("hostFeeNumerator"),
-      BufferLayout.nu64("hostFeeDenominator"),
-      BufferLayout.u8("curveType"),
-    ];
+    // const fields = [
+    //   BufferLayout.u8("instruction"),
+    //   BufferLayout.u8("nonce"),
+    //   BufferLayout.nu64("tradeFeeNumerator"),
+    //   BufferLayout.nu64("tradeFeeDenominator"),
+    //   BufferLayout.nu64("ownerTradeFeeNumerator"),
+    //   BufferLayout.nu64("ownerTradeFeeDenominator"),
+    //   BufferLayout.nu64("ownerWithdrawFeeNumerator"),
+    //   BufferLayout.nu64("ownerWithdrawFeeDenominator"),
+    //   BufferLayout.nu64("hostFeeNumerator"),
+    //   BufferLayout.nu64("hostFeeDenominator"),
+    //   BufferLayout.u8("curveType"),
+    // ];
 
-    if (config.curveType === CurveType.ConstantProductWithOffset) {
-      fields.push(BufferLayout.nu64("token_b_offset"));
-      fields.push(BufferLayout.blob(24, "padding"));
-    } else if (config.curveType === CurveType.ConstantPrice) {
-      fields.push(BufferLayout.nu64("token_b_price"));
-      fields.push(BufferLayout.blob(24, "padding"));
-    } else {
-      fields.push(BufferLayout.blob(32, "padding"));
-    }
+    // if (config.curveType === CurveType.ConstantProductWithOffset) {
+    //   fields.push(BufferLayout.nu64("token_b_offset"));
+    //   fields.push(BufferLayout.blob(24, "padding"));
+    // } else if (config.curveType === CurveType.ConstantPrice) {
+    //   fields.push(BufferLayout.nu64("token_b_price"));
+    //   fields.push(BufferLayout.blob(24, "padding"));
+    // } else {
+    //   fields.push(BufferLayout.blob(32, "padding"));
+    // }
 
-    const commandDataLayout = BufferLayout.struct(fields);
+    // const commandDataLayout = BufferLayout.struct(fields);
+
+    const commandDataLayout = BufferLayout.struct([
+      BufferLayout.u8('instruction'),
+      BufferLayout.nu64('tradeFeeNumerator'),
+      BufferLayout.nu64('tradeFeeDenominator'),
+      BufferLayout.nu64('ownerTradeFeeNumerator'),
+      BufferLayout.nu64('ownerTradeFeeDenominator'),
+      BufferLayout.nu64('ownerWithdrawFeeNumerator'),
+      BufferLayout.nu64('ownerWithdrawFeeDenominator'),
+      BufferLayout.nu64('hostFeeNumerator'),
+      BufferLayout.nu64('hostFeeDenominator'),
+      BufferLayout.u8('curveType'),
+      BufferLayout.blob(32, 'curveParameters'),
+    ]);
+
+    // package curve parameters
+    // NOTE: currently assume all curves take a single parameter, u64 int
+    //       the remaining 24 of the 32 bytes available are filled with 0s
+
+    let curveParamsBuffer = Buffer.alloc(32);
+    (new Numberu64(0)).toBuffer().copy(curveParamsBuffer);
 
     const { fees, ...rest } = config;
 
     const encodeLength = commandDataLayout.encode(
       {
         instruction: 0, // InitializeSwap instruction
-        nonce,
+        // nonce,
         ...fees,
-        ...rest,
+        curveType: rest.curveType,
+        curveParameters: curveParamsBuffer,
       },
       data
     );
